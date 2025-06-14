@@ -53,7 +53,7 @@ const eventColl = client.db("kindleVent-DB").collection("events");
 
 async function run() {
     try {
-        // ?All Events GET API
+        // ?Upcoming Events GET API
         app.get("/events/upcoming", async (req, res) => {
             const today = new Date();
             today.setHours(0, 0, 0, 0); //* strips all the time related values
@@ -95,7 +95,7 @@ async function run() {
             const eventDate = doc.eventDate; //* initial value of eventDate
             const [day, month, year] = eventDate.split("/").map(Number); //* converting formDate to number
             const date = new Date(year, month - 1, day); //* converting formDate into js date obj
-            doc.eventData = date;
+            doc.eventDate = date;
             const result = await eventColl.insertOne(doc);
             res.send({ message: "data added successfully", result: result });
         });
