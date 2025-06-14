@@ -60,11 +60,13 @@ async function run() {
             const query = {
                 eventDate: { $gte: today },
             };
+            const dateSort = { eventDate: 1 };
             const projection = {
                 participants: 0, //? exclude the participants field
             };
             const result = await eventColl
                 .find(query, { projection })
+                .sort(dateSort)
                 .toArray();
             res.send(result);
         });
