@@ -2,13 +2,13 @@ const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
 const admin = require("firebase-admin");
-const serviceAccount = require("./firebaseAdminKey.json");
+const serviceAccount = require("./decrypter.js");
 
 const port = process.env.PORT || 3000;
 const app = express();
 
 admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
+    credential: admin.credential.cert(serviceAccount()),
 });
 
 // ?Middlewares
@@ -60,13 +60,11 @@ async function run() {
             const query = {
                 eventDate: { $gte: today },
             };
-            const dateSort = { eventDate: 1 };
             const projection = {
                 participants: 0, //? exclude the participants field
             };
             const result = await eventColl
                 .find(query, { projection })
-                .sort(dateSort)
                 .toArray();
             res.send(result);
         });
@@ -81,11 +79,13 @@ async function run() {
             const query = {
                 "participants.email": userEmail,
             };
+            const dateSort = { eventDate: 1 };
             const projection = {
                 participants: 0, //? exclude the participants field
             };
             const result = await eventColl
                 .find(query, { projection })
+                .sort(dateSort)
                 .toArray();
             res.send(result);
         });
@@ -93,11 +93,15 @@ async function run() {
         // ? Create Events POST API
         app.post("/event/create", verifyToken, async (req, res) => {
             const doc = req.body;
+
             // ?Converting string date into ISO format
             const eventDate = doc.eventDate; //* initial value of eventDate
-            const [day, month, year] = eventDate.split("/").map(Number); //* converting formDate to number
+            const [day, month, year] = eventDate
+                .split("/")
+                .map((value) => Number(value)); //* converting formDate to number
             const date = new Date(year, month - 1, day); //* converting formDate into js date obj
             doc.eventDate = date;
+
             const result = await eventColl.insertOne(doc);
             res.send({ message: "data added successfully", result: result });
         });
