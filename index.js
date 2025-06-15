@@ -3,6 +3,7 @@ const cors = require("cors");
 require("dotenv").config();
 const admin = require("firebase-admin");
 const serviceAccount = require("./decrypter.js");
+const { format } = require("date-fns");
 
 const port = process.env.PORT || 3000;
 const app = express();
@@ -37,7 +38,7 @@ app.get("/", (req, res) => {
     res.send("Welcome to KindleVent....");
 });
 
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const uri = process.env.MONGO_URI;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -58,7 +59,7 @@ async function run() {
             const today = new Date();
             today.setHours(0, 0, 0, 0); //* strips all the time related values
             const query = {
-                eventDate: { $gte: today },
+                eventDate: { $gt: today },
             };
             const projection = {
                 participants: 0, //? exclude the participants field
@@ -87,6 +88,19 @@ async function run() {
                 .find(query, { projection })
                 .sort(dateSort)
                 .toArray();
+            res.send(result);
+        });
+
+        // ?Event Details GET API
+        app.get("/event/details/:id", verifyToken, async (req, res) => {
+            const _id = new ObjectId(req.params.id);
+            const query = {
+                _id,
+            };
+            const result = await eventColl.findOne(query);
+            const isoDate = new Date(result.eventDate);
+            const date = format(isoDate, "dd/MM/yyyy");
+            result.eventDate = date;
             res.send(result);
         });
 
