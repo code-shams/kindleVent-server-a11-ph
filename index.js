@@ -110,6 +110,26 @@ async function run() {
             res.send(result);
         });
 
+        // ?User Specific Event GET API
+        app.get("/event/user", verifyToken, async (req, res) => {
+            const userEmail = req.query?.email;
+            const tokenEmail = req?.decoded?.email;
+            if (userEmail !== tokenEmail) {
+                return res.status(403).send({ message: "Forbidden Access" });
+            }
+            const query = {
+                creatorEmail: userEmail,
+            };
+
+            const projection = {
+                participants: 0, //? exclude the participants field
+            };
+            const result = await eventColl
+                .find(query, { projection })
+                .toArray();
+            res.send(result);
+        });
+
         // ? Create Events POST API
         app.post("/event/create", verifyToken, async (req, res) => {
             const doc = req.body;
@@ -124,6 +144,29 @@ async function run() {
 
             const result = await eventColl.insertOne(doc);
             res.send({ message: "data added successfully", result: result });
+        });
+
+        // ?Update Event PUT API
+        app.put("/event/update/:id", verifyToken, async (req, res) => {
+            const _id = new ObjectId(req.params.id);
+            const query = {
+                _id,
+            };
+            const doc = req.body;
+            // ?Converting string date into ISO format
+            const eventDate = doc.eventDate; //* initial value of eventDate
+            const [day, month, year] = eventDate
+                .split("/")
+                .map((value) => Number(value)); //* converting formDate to number
+            const date = new Date(year, month - 1, day); //* converting formDate into js date obj
+            doc.eventDate = date;
+
+            const update = {
+                $set: doc,
+            };
+            const options = {};
+            const result = await eventColl.updateOne(query, update, options);
+            res.send(result);
         });
 
         // ?Joining Event PATCH API
