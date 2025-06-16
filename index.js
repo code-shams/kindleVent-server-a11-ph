@@ -54,6 +54,12 @@ const eventColl = client.db("kindleVent-DB").collection("events");
 
 async function run() {
     try {
+        // ?All Event GET API DB Health Check
+        app.get("/events/all", async (req, res) => {
+            const result = await eventColl.find().toArray();
+            res.send(result);
+        });
+
         // ?Upcoming Events GET API
         app.get("/events/upcoming", async (req, res) => {
             const today = new Date();
@@ -118,6 +124,23 @@ async function run() {
 
             const result = await eventColl.insertOne(doc);
             res.send({ message: "data added successfully", result: result });
+        });
+
+        // ?Joining Event PATCH API
+        app.patch("/event/join/:id", async (req, res) => {
+            const _id = new ObjectId(req.params.id);
+            const email = req.body.email;
+
+            const query = {
+                _id,
+            };
+            const doc = {
+                $addToSet: {
+                    participants: { email },
+                },
+            };
+            const result = await eventColl.updateOne(query, doc);
+            res.send(result);
         });
     } finally {
     }
