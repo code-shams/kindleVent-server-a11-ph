@@ -62,13 +62,26 @@ async function run() {
 
         // ?Upcoming Events GET API
         app.get("/events/upcoming", async (req, res) => {
+            const eventType = req.query?.eventType;
+            const title = req.query?.title;
+            console.log(req.query);
             const today = new Date();
             today.setHours(0, 0, 0, 0); //* strips all the time related values
+            // ?default query targeting only future event
             const query = {
                 eventDate: { $gt: today },
             };
+            // ?Filter by eventType
+            if (eventType && eventType !== "Filter by Event Type") {
+                query.eventType = eventType;
+            }
+            // ?Search by Title
+            if (title) {
+                query.title = { $regex: title, $options: "i" };
+            }
+            //? exclude the participants field
             const projection = {
-                participants: 0, //? exclude the participants field
+                participants: 0,
             };
             const result = await eventColl
                 .find(query, { projection })
