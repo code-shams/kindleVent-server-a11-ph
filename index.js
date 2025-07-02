@@ -39,6 +39,7 @@ app.get("/", (req, res) => {
 });
 
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const { sort } = require("semver");
 const uri = process.env.MONGO_URI;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -64,7 +65,8 @@ async function run() {
         app.get("/events/upcoming", async (req, res) => {
             const eventType = req.query?.eventType;
             const title = req.query?.title;
-            console.log(req.query);
+            const dateOrder = parseInt(req.query.sort);
+            const sort = { eventDate: dateOrder };
             const today = new Date();
             today.setHours(0, 0, 0, 0); //* strips all the time related values
             // ?default query targeting only future event
@@ -85,6 +87,7 @@ async function run() {
             };
             const result = await eventColl
                 .find(query, { projection })
+                .sort(sort)
                 .toArray();
             res.send(result);
         });
